@@ -1,0 +1,38 @@
+name: 'Lib Watchdog'
+description: 'Monitor and automatically update library versions across your organization repositories'
+author: 'hocaron'
+branding:
+  icon: 'refresh-cw'
+  color: 'blue'
+
+inputs:
+  github-token:
+    description: 'GitHub token with repository access'
+    required: true
+  scope-type:
+    description: 'Scope type (organization or user)'
+    required: false
+    default: 'organization'
+  scope-name:
+    description: 'Organization name or username'
+    required: true
+  new-version:
+    description: 'New version to update to'
+    required: true
+  file-pattern:
+    description: 'File pattern to search (e.g., build.gradle, pom.xml)'
+    required: false
+    default: 'build.gradle'
+  slack-webhook-url:
+    description: 'Slack webhook URL for notifications'
+    required: false
+
+outputs:
+  updated-repos:
+    description: 'List of repositories that were updated'
+  pr-urls:
+    description: 'List of created pull request URLs'
+
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
