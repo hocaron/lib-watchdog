@@ -1,0 +1,48 @@
+name: Develop Build
+on:
+  push:
+    branches:
+      - develop
+      - feature/*
+    paths:
+      - 'src/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get current branch
+        id: branch_name
+        run: echo "branch_name=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
+
+      - name: Configure Git
+        run: |
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git config user.name "${{ github.actor }}"
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Add dist folder
+        run: |
+          git add dist
+          git commit -m "Chore Build: ${{ github.run_number }}"
+
+      - name: Push changes to branch
+        uses: ad-m/github-push-action@master
+        with:
+          branch: ${{ env.branch_name }}
+          github_token: ${{ secrets.GH_TOKEN }}

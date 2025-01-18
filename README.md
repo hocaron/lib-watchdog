@@ -19,13 +19,13 @@ Lib Watchdog is a GitHub Action that automatically updates library versions acro
 ## Inputs
 
 | Input | Description | Required | Default |
-|-------|-------------|----------|---------|
-| `github-token` | GitHub token with repository access | ✅ | - |
+|-------|-------------|----------|--------|
+| `github-token` | GitHub token with repository access | ✅ | ${{ secrets.GH_TOKEN }} |
 | `scope-type` | Scope type (organization or user) | ❌ | `organization` |
 | `scope-name` | Organization name or username | ✅ | - |
 | `new-version` | New version to update to | ✅ | - |
 | `file-pattern` | File pattern to search (e.g., build.gradle, pom.xml) | ❌ | `build.gradle` |
-| `slack-webhook-url` | Slack webhook URL for notifications | ❌ | - |
+| `slack-webhook-url` | Slack webhook URL for notifications | ❌ | ${{ secrets.SLACK_WEBHOOK }} |
 
 ## Outputs
 
@@ -53,7 +53,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: hocaron/lib-watchdog@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_TOKEN }}
           scope-type: org
           scope-name: your-organization
           library-name: example-library
