@@ -37059,7 +37059,7 @@ class GitHubService {
     async searchRepositories(scopeType, scopeName, libraryName, filePattern) {
         // org:orgname 또는 user:username 형식으로 검색
         const scope = `${scopeType}:${scopeName}`;
-        const query = `${scope} filename:${filePattern} path:**/${filePattern} "${libraryName}"`;
+        const query = `${scope} filename:${filePattern} "${libraryName}"`;
         const result = await this.octokit.rest.search.code({q: query});
         return result.data.items;
     }
