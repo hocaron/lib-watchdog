@@ -1,6 +1,7 @@
 name: 'Lib Watchdog'
 description: 'Monitor and automatically update library versions across your organization repositories'
 author: 'hocaron'
+
 branding:
   icon: 'refresh-cw'
   color: 'blue'
