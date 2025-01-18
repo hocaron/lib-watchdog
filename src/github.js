@@ -70,42 +70,48 @@ class GitHubService {
         }
     }
 
-    async updateFile(owner, repo, path, content, message, branch) {
-        try {
-            // 현재 파일의 내용 가져오기
-            const {data: currentFile} = await this.octokit.rest.repos.getContent({
-                owner,
-                repo,
-                path,
-                ref: branch
-            });
+    async updateFiles(owner, repo, updates, message, branch) {
+        let updated = false;
 
-            // 현재 파일의 내용을 디코드
-            const currentContent = Buffer.from(currentFile.content, 'base64').toString();
+        for (const { path, content, sha } of updates) {
+            try {
+                // 현재 파일의 내용 가져오기
+                const { data: currentFile } = await this.octokit.rest.repos.getContent({
+                    owner,
+                    repo,
+                    path,
+                    ref: branch
+                });
 
-            // 내용이 같으면 업데이트 스킵
-            if (currentContent === content) {
-                core.info(`File ${path} in ${owner}/${repo} is already up to date, skipping...`);
-                return false;
+                // 현재 파일의 내용을 디코드
+                const currentContent = Buffer.from(currentFile.content, 'base64').toString();
+
+                // 내용이 같으면 업데이트 스킵
+                if (currentContent === content) {
+                    core.info(`File ${path} in ${owner}/${repo} is already up to date, skipping...`);
+                    continue;
+                }
+
+                // 내용이 다르면 업데이트
+                await this.octokit.rest.repos.createOrUpdateFileContents({
+                    owner,
+                    repo,
+                    path,
+                    message,
+                    content: Buffer.from(content).toString('base64'),
+                    sha,
+                    branch,
+                });
+
+                core.info(`Successfully updated file ${path} in ${repo}`);
+                updated = true;
+            } catch (error) {
+                core.error(`Failed to update file ${path} in ${repo}: ${error.message}`);
+                throw error;
             }
-
-            // 내용이 다르면 업데이트
-            await this.octokit.rest.repos.createOrUpdateFileContents({
-                owner,
-                repo,
-                path,
-                message,
-                content: Buffer.from(content).toString('base64'),
-                sha: currentFile.sha,
-                branch,
-            });
-
-            core.info(`Successfully updated file ${path} in ${owner}/${repo}`);
-            return true;
-        } catch (error) {
-            core.error(`Failed to update file: ${error.message}`);
-            throw error;
         }
+
+        return updated;
     }
 
     async createPullRequest(owner, repo, title, body, head, baseBranch) {
