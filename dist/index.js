@@ -37199,7 +37199,7 @@ class SlackService {
                     type: "header",
                     text: {
                         type: "plain_text",
-                        text: "🚀 라이브러리 버전 업데이트 알림",
+                        text: `🚀 ${libraryName} ${newVersion} 버전 출시 알림`,
                         emoji: true
                     }
                 },
@@ -37207,7 +37207,14 @@ class SlackService {
                     type: "section",
                     text: {
                         type: "mrkdwn",
-                        text: `*${libraryName}* \`${newVersion}\` 버전으로 업데이트하는 PR이 생성되었습니다`
+                        text: `*${libraryName}* 라이브러리의 새로운 버전인 \`${newVersion}\`이 출시되었어요!`
+                    }
+                },
+                {
+                    type: "section",
+                    text: {
+                        type: "mrkdwn",
+                        text: `버전에 맞춰 필요한 업데이트 작업을 자동으로 준비해두었어요. 아래 링크에서 확인해 주시면 돼요.`
                     }
                 },
                 {
@@ -37217,7 +37224,7 @@ class SlackService {
                     type: "section",
                     text: {
                         type: "mrkdwn",
-                        text: "*업데이트가 필요한 레포지토리*\n" + formattedUpdates
+                        text: `*업데이트가 필요한 서비스*\n${formattedUpdates}`
                     }
                 },
                 {
@@ -37225,8 +37232,7 @@ class SlackService {
                     elements: [
                         {
                             type: "mrkdwn",
-                            text: "💡 레포지토리 이름을 클릭하면 업데이트 PR로 이동합니다.\n" +
-                                "🙏 검토 후 머지 부탁드립니다."
+                            text: "🔗 서비스 이름을 클릭하면 준비된 작업(PR)을 바로 확인하실 수 있어요.\n🙌 작업 내용을 확인하시고 머지해 주시면 정말 감사하겠습니다!"
                         }
                     ]
                 }
