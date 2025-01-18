@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: your-org/lib-watchdog@v1
+      - uses: hocaron/lib-watchdog@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           scope-type: org
