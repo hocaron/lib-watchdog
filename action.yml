@@ -10,6 +10,7 @@ inputs:
   github-token:
     description: 'GitHub token with repository access'
     required: true
+    default: ${{ secrets.GH_TOKEN }}
   scope-type:
     description: 'Scope type (organization or user)'
     required: false
@@ -27,6 +28,7 @@ inputs:
   slack-webhook-url:
     description: 'Slack webhook URL for notifications'
     required: false
+    default: ${{ secrets.SLACK_WEBHOOK }}
 
 outputs:
   updated-repos:

@@ -3,9 +3,12 @@ on:
   push:
     branches:
       - develop
+      - feature/*
+    paths:
+      - 'src/**'
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -13,8 +16,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Checkout develop branch
-        run: git checkout develop
+      - name: Get current branch
+        id: branch_name
+        run: echo "branch_name=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
+
+      - name: Configure Git
+        run: |
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git config user.name "${{ github.actor }}"
 
       - name: Use Node.js
         uses: actions/setup-node@v3
@@ -30,10 +39,10 @@ jobs:
       - name: Add dist folder
         run: |
           git add dist
-          git commit -m "chore: build and deploy"
+          git commit -m "Chore Build: ${{ github.run_number }}"
 
-      - name: Push changes
+      - name: Push changes to branch
         uses: ad-m/github-push-action@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: develop
+          branch: ${{ env.branch_name }}
+          github_token: ${{ secrets.GH_TOKEN }}
