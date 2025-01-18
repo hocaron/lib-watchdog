@@ -2,18 +2,9 @@ const core = require('@actions/core');
 const GitHubService = require('./github');
 const SlackService = require('./slack');
 
-async function run() {
+async function runWithParams({ token, scopeType, scopeName, libraryName, newVersion, filePattern, slackWebhookUrl }) {
     try {
-        // Get inputs
         core.info('🚀 Starting Lib Watchdog...');
-        const token = core.getInput('github-token', {required: true});
-        const scopeType = core.getInput('scope-type', {required: true});
-        const scopeName = core.getInput('scope-name', {required: true});
-        const libraryName = core.getInput('library-name', {required: true});
-        const newVersion = core.getInput('new-version', {required: true});
-        const filePattern = core.getInput('file-pattern');
-        const slackWebhookUrl = core.getInput('slack-webhook-url');
-
         core.info(`📋 Input Configuration:
            - Scope Type: ${scopeType}
            - Scope Name: ${scopeName}
@@ -35,42 +26,42 @@ async function run() {
         const repos = await github.searchRepositories(scopeType, scopeName, libraryName, filePattern);
         core.info(`Found ${repos.length} repositories to check`);
 
-        for (const repo of repos) {
-            core.info(`\n📦 Checking repository: ${repo.repository.name}`);
+        const repoGroups = repos.reduce((acc, item) => {
+            const repoName = item.repository.name;
+            acc[repoName] = acc[repoName] || [];
+            acc[repoName].push(item);
+            return acc;
+        }, {});
 
-            const {content, sha} = await github.getFileContent(
-                scopeName,
-                repo.repository.name,
-                repo.path
-            );
-            core.debug(`File SHA: ${sha}`);
+        for (const [repoName, files] of Object.entries(repoGroups)) {
+            core.info(`📦 Processing repository: ${repoName}`);
 
-            // Extract and compare versions
-            const currentVersion = extractVersion(content, libraryName);
-            core.info(`Current version: ${currentVersion}`);
+            const baseBranch = await github.getDefaultBranch(scopeName, repoName);
+            const branchName = `update-${libraryName.replace(/[/:]/g, '-')}-${newVersion}`;
+            await github.createBranch(scopeName, repoName, branchName, baseBranch);
 
-            if (!shouldUpdate(currentVersion, newVersion)) {
-                core.info('⏭️ No update needed, skipping...');
-                continue;
+            const updates = [];
+            let currentVersion = "";
+
+            for (const file of files) {
+                const { content, sha } = await github.getFileContent(scopeName, repoName, file.path);
+                currentVersion = extractVersion(content, libraryName);
+
+                if (!shouldUpdate(currentVersion, newVersion)) {
+                    core.info(`⏭️ File ${file.path} is already up-to-date.`);
+                    continue;
+                }
+
+                const newContent = updateVersionInFile(content, libraryName, currentVersion, newVersion);
+                updates.push({ path: file.path, content: newContent, sha });
             }
 
-            core.info(`🔄 Update needed: ${currentVersion} → ${newVersion}`);
-
-            // Create branch and update file
-            const branchName = `update-${libraryName.replace(/[/:]/g, '-')}-${newVersion}`;
-            core.info(`Creating branch: ${branchName}`);
-            const baseBranch = await github.getDefaultBranch(scopeName, repo.repository.name);
-            const branchExists = await github.createBranch(scopeName, repo.repository.name, branchName, baseBranch);
-
-            core.info('Updating file content...');
-            const newContent = updateVersionInFile(content, libraryName, currentVersion, newVersion);
-            if (branchExists) {
-                // 브랜치가 이미 있는 경우, 파일 내용 체크
-                const needsUpdate = await github.updateFile(
+            if (updates.length > 0) {
+                core.info('🔄 Updating files...');
+                const needsUpdate = await github.updateFiles(
                     scopeName,
-                    repo.repository.name,
-                    repo.path,
-                    newContent,
+                    repoName,
+                    updates,
                     `chore: Update ${libraryName} to ${newVersion}`,
                     branchName
                 );
@@ -78,33 +69,22 @@ async function run() {
                     core.info('Branch exists and file is already updated, skipping...');
                     continue;
                 }
-            } else {
-                // 새로운 브랜치인 경우, 무조건 업데이트
-                await github.updateFile(
+
+                core.info('Creating Pull Request...');
+                const pr = await github.createPullRequest(
                     scopeName,
-                    repo.repository.name,
-                    repo.path,
-                    newContent,
-                    `chore: Update ${libraryName} to ${newVersion}`,
-                    branchName
+                    repoName,
+                    `Update ${libraryName} to ${newVersion}`,
+                    createPRBody(libraryName, newVersion),
+                    branchName,
+                    baseBranch
                 );
+                core.info(`✅ Successfully created PR: ${pr.html_url}`);
+
+                // Track updates
+                repoInfos.push(`${repoName} (${currentVersion} → ${newVersion})`);
+                prUrls.push(`${pr.html_url}`);
             }
-
-            // Create PR
-            core.info('Creating Pull Request...');
-            const pr = await github.createPullRequest(
-                scopeName,
-                repo.repository.name,
-                `Update ${libraryName} to ${newVersion}`,
-                createPRBody(libraryName, currentVersion, newVersion),
-                branchName,
-                baseBranch
-            );
-            core.info(`✅ Successfully created PR: ${pr.html_url}`);
-
-            // Track updates
-            repoInfos.push(`${repo.repository.name} (${currentVersion} → ${newVersion})`);
-            prUrls.push(`${pr.html_url}`);
         }
 
         // Set outputs
@@ -130,6 +110,26 @@ async function run() {
         core.error(error);
         core.setFailed(error.message);
     }
+}
+
+async function run() {
+    const token = core.getInput('github-token', { required: true });
+    const scopeType = core.getInput('scope-type', { required: true });
+    const scopeName = core.getInput('scope-name', { required: true });
+    const libraryName = core.getInput('library-name', { required: true });
+    const newVersion = core.getInput('new-version', { required: true });
+    const filePattern = core.getInput('file-pattern');
+    const slackWebhookUrl = core.getInput('slack-webhook-url');
+
+    await runWithParams({
+        token,
+        scopeType,
+        scopeName,
+        libraryName,
+        newVersion,
+        filePattern,
+        slackWebhookUrl,
+    });
 }
 
 // Helper functions with logging
@@ -171,3 +171,5 @@ function createPRBody(libraryName, currentVersion, newVersion) {
 }
 
 run();
+
+module.exports = { run, runWithParams };
