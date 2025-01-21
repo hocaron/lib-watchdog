@@ -37261,7 +37261,7 @@ async function runWithParams({ token, scopeType, scopeName, libraryName, newVers
                     scopeName,
                     repoName,
                     `Update ${libraryName} to ${newVersion}`,
-                    createPRBody(libraryName, newVersion),
+                    createPRBody(libraryName, currentVersion, newVersion),
                     branchName,
                     baseBranch
                 );
