@@ -21,7 +21,7 @@ Lib Watchdog is a GitHub Action that automatically updates library versions acro
 | Input | Description | Required | Default |
 |-------|-------------|----------|--------|
 | `github-token` | GitHub token with repository access | ✅ | ${{ secrets.GH_TOKEN }} |
-| `scope-type` | Scope type (organization or user) | ❌ | `organization` |
+| `scope-type` | Scope type (org or user) | ❌ | `org` |
 | `scope-name` | Organization name or username | ✅ | - |
 | `new-version` | New version to update to | ✅ | - |
 | `file-pattern` | File pattern to search (e.g., build.gradle, pom.xml) | ❌ | `build.gradle` |
@@ -88,4 +88,5 @@ Contributions are welcome! Please open an issue or submit a pull request.
 
 ## License
 
-[Add your license information here]
+This project is licensed under the Apache License 2.0.
+You can view the full license text here or visit the official Apache License 2.0 page for more details.

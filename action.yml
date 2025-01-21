@@ -11,9 +11,9 @@ inputs:
     description: 'GitHub token with repository access'
     required: true
   scope-type:
-    description: 'Scope type (organization or user)'
+    description: 'Scope type (org or user)'
     required: false
-    default: 'organization'
+    default: 'org'
   scope-name:
     description: 'Organization name or username'
     required: true
